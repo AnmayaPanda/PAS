@@ -1,4 +1,4 @@
-from app import db
+from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class Medication(db.Model):
@@ -12,7 +12,7 @@ class Medication(db.Model):
     notes = db.Column(db.String(255), nullable=True)
 
 class User(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
@@ -26,3 +26,8 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.username}>"
+
+class PillSchedule(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    time = db.Column(db.String(10), nullable=False)

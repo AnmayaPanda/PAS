@@ -1,10 +1,12 @@
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file,flash
+from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from io import BytesIO
-
+from extensions import db
+from models import PillSchedule
 app = Flask(__name__)
 
 # Configuration for SQLAlchemy and Flask session
@@ -13,7 +15,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'  # For sessions
 
 # Initialize the database
-db = SQLAlchemy(app)
+#db = SQLAlchemy(app)
+db.init_app(app)
 
 # Import the models
 from models import Medication, User
@@ -170,6 +173,18 @@ def export_medications():
 
     # Send the file as a response with a download prompt
     return send_file(output, as_attachment=True, download_name='medications.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+@app.route('/schedule', methods=['POST'])
+def schedule():
+    times = request.form.get('times')
+    schedule_times = [request.form.get(f'time{i}') for i in range(int(times))]
+    # Save `schedule_times` in the database (pseudo-code below):
+    for time in schedule_times:
+        db.session.add(PillSchedule(user_id=current_user.id, time=time))
+    db.session.commit()
+    flash('Schedule saved successfully!')
+    return redirect(url_for('home'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
